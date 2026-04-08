@@ -1,0 +1,345 @@
+:root {
+  --bg: #ffffff;
+  --header-bg: #f0f0f0;
+  --text: #111111;
+  --placeholder-bg: #e8e8e8;
+  --p: 0;
+  --q: 0;
+  --stage-bg-mix: #ffffff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  font-family: "DM Sans", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ——— Header ——— */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  min-height: 56px;
+  padding: 0 clamp(16px, 4vw, 48px);
+  background: var(--header-bg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.logo {
+  font-family: "Syne", "DM Sans", sans-serif;
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--text);
+  justify-self: start;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.75rem, 2.5vw, 2rem);
+}
+
+.nav a {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav a:hover {
+  opacity: 0.65;
+}
+
+.cta {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  justify-self: end;
+}
+
+.cta:hover {
+  opacity: 0.65;
+}
+
+/* ——— Scroll + sticky ——— */
+.scroll-stage {
+  --p: 0;
+  --q: 0;
+  --placeholder-vis: calc(var(--p) * (1 - var(--q)));
+  --below-header: calc(100vh - var(--header-measured, 56px));
+  --stage-mix: calc(var(--q) * 100%);
+  --pad-x: calc((1 - var(--q)) * clamp(12px, 3vw, 40px));
+  min-height: 380vh;
+  padding-top: var(--header-measured, 56px);
+  background-color: color-mix(
+    in srgb,
+    #2f2f2f var(--stage-mix),
+    #ffffff calc(100% - var(--stage-mix))
+  );
+}
+
+@supports not (background-color: color-mix(in srgb, white 50%, black)) {
+  .scroll-stage {
+    background-color: #ffffff;
+  }
+
+  .scroll-stage.is-dark-body {
+    background-color: #2f2f2f;
+  }
+}
+
+.sticky-viewport {
+  position: sticky;
+  top: var(--header-measured, 56px);
+  min-height: var(--below-header);
+  display: flex;
+  justify-content: center;
+  padding-left: var(--pad-x);
+  padding-right: var(--pad-x);
+  padding-bottom: clamp(16px, 4vh, 40px);
+  box-sizing: border-box;
+}
+
+.stage-column {
+  width: 100%;
+  max-width: calc((1 - var(--q)) * min(960px, 94vw) + var(--q) * 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* 左罗盘 | 右 Daizy */
+.split-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: var(--below-header);
+}
+
+.compass-panel {
+  flex: 0 0 calc(var(--q) * 50%);
+  max-width: calc(var(--q) * 50%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: var(--q);
+  z-index: 20;
+}
+
+.compass-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 20px);
+}
+
+.compass-img {
+  display: block;
+  width: min(520px, 38vw, 88%);
+  height: auto;
+  max-height: min(72vh, 640px);
+  object-fit: contain;
+}
+
+.daizy-outer {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 10;
+}
+
+.daizy-outer.is-split-phase {
+  flex: 1 1 50%;
+  max-width: calc((1 - var(--q)) * 100% + var(--q) * 50%);
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+/* hero-slot 承担 position:fixed（无 filter，避免包含块问题） */
+.hero-slot {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-slot.is-docked {
+  z-index: 15;
+  pointer-events: auto;
+}
+
+.hero-wrap {
+  position: relative;
+  width: var(--img-w, min(88vw, 960px));
+  max-width: 100%;
+  filter: drop-shadow(
+    0 calc(6px + 8px * (1 - var(--p))) calc(18px + 12px * (1 - var(--p)))
+      rgba(17, 24, 39, calc(0.07 + 0.06 * (1 - var(--p))))
+  );
+  transition: filter 0.2s ease;
+}
+
+/* 右半屏贴底时去掉阴影（fixed 布局） */
+.hero-slot.is-docked .hero-wrap {
+  filter: none;
+}
+
+/* 仅展示图源左半：可视宽 = 槽宽，图片渲染为 200% 槽宽并左对齐 */
+.hero-crop {
+  overflow: hidden;
+  width: 100%;
+}
+
+.hero-img {
+  position: relative;
+  display: block;
+  width: calc(100% * (1 + var(--q)));
+  max-width: none;
+  height: auto;
+  z-index: 1;
+}
+
+/* 蒙层盖住裁剪区域；全局层级低于左侧 compass */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: var(--q);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+/* ——— Placeholder：第一段结束（贴顶 60px）后随第二段滚动消失 ——— */
+.placeholder-block {
+  --pv: var(--placeholder-vis);
+  width: 100%;
+  margin-top: calc(var(--pv) * 80px);
+  padding: calc(var(--pv) * clamp(1.5rem, 3.5vh, 2.25rem))
+    calc(var(--pv) * clamp(1rem, 3.5vw, 1.75rem));
+  min-height: calc(var(--pv) * min(260px, 36vh));
+  max-height: calc(var(--pv) * 2000px);
+  overflow: hidden;
+  background: var(--placeholder-bg);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  text-align: center;
+  opacity: var(--pv);
+  transform: translateY(calc((1 - var(--p)) * 12px));
+  pointer-events: none;
+  box-sizing: border-box;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.placeholder-block.is-interactive {
+  pointer-events: auto;
+}
+
+.placeholder-block__title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.35rem, 3.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.placeholder-block__body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: rgba(17, 17, 17, 0.72);
+  max-width: 36rem;
+  margin-inline: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-stage {
+    min-height: auto;
+  }
+
+  .sticky-viewport {
+    position: relative;
+    min-height: auto;
+  }
+
+  .hero-wrap {
+    --img-w: min(50vw, 720px);
+    width: min(50vw, 720px);
+  }
+
+  .hero-img {
+    width: 200%;
+  }
+
+  .placeholder-block {
+    opacity: 0;
+    transform: none;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .site-header {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+    padding: 10px 16px 12px;
+    gap: 8px;
+  }
+
+  .logo,
+  .cta {
+    justify-self: center;
+  }
+
+  .nav {
+    gap: 10px;
+  }
+
+  .split-row {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .compass-panel {
+    flex: 0 0 auto;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .compass-img {
+    width: min(92vw, 420px);
+    max-height: 50vh;
+  }
+
+  .daizy-outer.is-split-phase {
+    max-width: 100%;
+    align-items: center;
+  }
+}

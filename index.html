@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DAZIY</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="site-header">
+      <a class="logo" href="#">DAZIY</a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#">PG-2</a>
+        <a href="#">Tools(暂定页)</a>
+        <a href="#">互动页</a>
+        <a href="#">说明书页</a>
+      </nav>
+      <a class="cta" href="#">Get Connected</a>
+    </header>
+
+    <main class="scroll-stage" id="scroll-stage">
+      <div class="sticky-viewport">
+        <div class="stage-column" id="stage-column">
+          <div class="split-row" id="split-row">
+            <div class="compass-panel" id="compass-panel">
+              <div class="compass-inner">
+                <img
+                  class="compass-img"
+                  id="compass-img"
+                  src="compass.png"
+                  alt="和弦罗盘"
+                  decoding="async"
+                />
+              </div>
+            </div>
+            <div class="daizy-outer" id="daizy-outer">
+              <div class="hero-slot" id="hero-slot">
+                <div class="hero-wrap" id="hero-wrap">
+                  <div class="hero-crop">
+                    <img
+                      class="hero-img"
+                      id="hero-img"
+                      src="daizy.png"
+                      alt="Daizy"
+                      decoding="async"
+                    />
+                  </div>
+                  <span class="hero-overlay" aria-hidden="true"></span>
+                </div>
+              </div>
+              <section
+                class="placeholder-block"
+                id="placeholder-block"
+                aria-label="内容占位"
+              >
+                <p class="placeholder-block__title">什么是Daizy</p>
+                <p class="placeholder-block__body">
+                  此处可替换为项目介绍或说明文案。
+                </p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="main.js"></script>
+  </body>
+</html>
