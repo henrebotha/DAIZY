@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://daizy.example.com/sitemap.xml

@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Daizy Waves",
   description: "A Next.js landing page built from the Big Sur blue waves study.",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({
