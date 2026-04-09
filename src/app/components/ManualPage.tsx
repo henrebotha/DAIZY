@@ -3,8 +3,8 @@ import imgManual from "figma:asset/55739a416db6af05d0db251597f5c1129148c19f.png"
 export function ManualPage() {
   return (
     <div className="bg-[#061115] min-h-screen pt-10">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between pl-8 md:pl-16">
-        <div className="order-2 md:order-1 md:ml-32 mt-6 md:mt-0 w-full md:w-auto flex flex-col items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between pl-8 md:pl-16 md:min-h-[calc(100vh-2.5rem)]">
+        <div className="order-2 md:order-1 md:ml-32 mt-6 md:mt-0 w-full md:w-auto flex flex-col items-center relative z-10">
           <img
             src="/media/gunlun.gif"
             alt="Gunlun"
@@ -20,7 +20,7 @@ export function ManualPage() {
         <img
           src={imgManual}
           alt="PG-2 Manual"
-          className="order-1 md:order-2 max-h-[calc(100vh-5rem)] object-contain"
+          className="order-1 md:order-2 max-h-[calc(100vh-5rem)] object-contain md:fixed md:top-10 md:right-0"
         />
       </div>
     </div>
