@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { connectPG2, uploadCW, activateCW, type CWChord } from "../lib/pg2";
 
 const scenes = [
   {
@@ -32,22 +33,57 @@ const scenes = [
   },
 ];
 
-const experiences = [
+// Slot order: 0=Center, 1=Up, 2=NE, 3=Right, 4=SE, 5=Down, 6=SW, 7=Left, 8=NW
+// 9 chords, names ≤ 7 chars practical
+const SHARED_CHORDS: CWChord[] = [
+  { name: "Daizy", notes: [40, 45, 50, 55, 59, 64] },
+  { name: "C",    notes: [0,  48, 52, 55, 60, 64] },
+  { name: "Em",   notes: [40, 47, 52, 55, 59, 64] },
+  { name: "G",    notes: [43, 47, 50, 55, 59, 67] },
+  { name: "Dm",   notes: [0,  0,  50, 57, 62, 65] },
+  { name: "Am",   notes: [0,  45, 52, 57, 60, 64] },
+  { name: "G7",   notes: [43, 47, 50, 55, 59, 65] },
+  { name: "F",    notes: [41, 48, 53, 57, 60, 65] },
+  { name: "E7",   notes: [40, 47, 50, 56, 59, 64] },
+];
+
+type Experience = {
+  id: string;
+  name: string;
+  mood: string;
+  image: string;
+  href: string;
+  ambience: string;
+  chords: CWChord[];
+  capo: number;
+  instrument?: 0 | 1 | 2 | 3;
+};
+
+const experiences: Experience[] = [
   {
     id: "playwithdaizy",
-    name: "Play with Daizy",
+    name: "原野",
     mood: "Ambient Jam",
     image: "/playground/bg.jpg",
     href: "/playground/playwithdaizy.html",
+    ambience: "/playground/ambienceloop.mp3",
+    chords: SHARED_CHORDS,
+    capo: 0,
   },
   {
     id: "aurora",
-    name: "Play with Daizy — Aurora",
+    name: "Aurora",
     mood: "Northern Lights Edition",
     image: "/playground/aurorabg2.jpg",
     href: "/playground/playwithdaizyunteraurora.html",
+    ambience: "/playground/auroraambientloop.mp3",
+    chords: SHARED_CHORDS,
+    capo: 11,
+    instrument: 1,
   },
 ];
+
+type ExpStatus = "idle" | "loading" | "ready" | "error";
 
 const pianoKeys = ["C", "D", "E", "F", "G", "A", "B"];
 
@@ -55,6 +91,154 @@ export function PlaygroundPage() {
   const [selectedScene, setSelectedScene] = useState<string | null>(null);
   const [showPiano, setShowPiano] = useState(false);
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [expStatus, setExpStatus] = useState<Record<string, ExpStatus>>({});
+  const [expError, setExpError] = useState<Record<string, string>>({});
+  const [activeExp, setActiveExp] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const voicesRef = useRef<Map<number, { osc: OscillatorNode; gain: GainNode }>>(new Map());
+  const midiInputsRef = useRef<any[]>([]);
+  const capoRef = useRef(0);
+  const instrumentRef = useRef<0 | 1 | 2 | 3>(0);
+
+  const stopAllVoices = () => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    voicesRef.current.forEach(({ osc, gain }) => {
+      try {
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.05);
+        osc.stop(now + 0.06);
+      } catch {}
+    });
+    voicesRef.current.clear();
+  };
+
+  const handleMIDI = (msg: any) => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    const [status, data1, data2] = msg.data;
+    const cmd = status & 0xf0;
+    if (cmd === 0x90 && data2 > 0) {
+      // note on
+      if (voicesRef.current.has(data1)) return;
+      const note = data1 + capoRef.current;
+      const freq = 440 * Math.pow(2, (note - 69) / 12);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const inst = instrumentRef.current;
+      // 镜像 HTML 里 4 种乐器的包络
+      let attackTime = 0.015;
+      let targetVol = (data2 / 127) * 0.35;
+      let sustainLevel = targetVol * 0.4 + 0.0001;
+      const decayTime = 1.0;
+      if (inst === 0) {
+        osc.type = "triangle";
+      } else if (inst === 1) {
+        osc.type = "sine";
+        attackTime = 0.01;
+        targetVol *= 1.2;
+        sustainLevel = targetVol * 0.2 + 0.0001;
+      } else if (inst === 2) {
+        osc.type = "sine";
+        attackTime = 0.4;
+        targetVol *= 0.8;
+        sustainLevel = targetVol * 0.8 + 0.0001;
+      } else if (inst === 3) {
+        osc.type = "square";
+        attackTime = 0.005;
+        targetVol *= 0.15;
+        sustainLevel = targetVol * 0.3 + 0.0001;
+      }
+      osc.frequency.value = freq;
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(targetVol, now + attackTime);
+      gain.gain.exponentialRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      voicesRef.current.set(data1, { osc, gain });
+    } else if (cmd === 0x80 || (cmd === 0x90 && data2 === 0)) {
+      // note off
+      const v = voicesRef.current.get(data1);
+      if (!v) return;
+      const now = ctx.currentTime;
+      try {
+        v.gain.gain.cancelScheduledValues(now);
+        v.gain.gain.setValueAtTime(v.gain.gain.value, now);
+        v.gain.gain.linearRampToValueAtTime(0, now + 0.15);
+        v.osc.stop(now + 0.16);
+      } catch {}
+      voicesRef.current.delete(data1);
+    }
+  };
+
+  const stopExperience = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    midiInputsRef.current.forEach((inp) => {
+      try { inp.onmidimessage = null; } catch {}
+    });
+    midiInputsRef.current = [];
+    stopAllVoices();
+    if (audioCtxRef.current) {
+      try { audioCtxRef.current.close(); } catch {}
+      audioCtxRef.current = null;
+    }
+    setActiveExp(null);
+  };
+
+  const handleExperienceClick = async (exp: Experience) => {
+    // Toggle off if clicking the active card
+    if (activeExp === exp.id) {
+      stopExperience();
+      setExpStatus((s) => ({ ...s, [exp.id]: "idle" }));
+      return;
+    }
+    // Stop previous experience first
+    if (activeExp) {
+      const prev = activeExp;
+      stopExperience();
+      setExpStatus((s) => ({ ...s, [prev]: "idle" }));
+    }
+
+    setExpStatus((s) => ({ ...s, [exp.id]: "loading" }));
+    setExpError((e) => ({ ...e, [exp.id]: "" }));
+    try {
+      await connectPG2();
+      // 设备 capo 永远写 0，所有移调都在 web 合成器里做，避免和 HTML 页面共享设备状态
+      uploadCW(exp.chords, 0);
+      activateCW();
+
+      // start audio context + subscribe to MIDI inputs
+      const access = await (navigator as any).requestMIDIAccess({ sysex: true });
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current = ctx;
+      capoRef.current = exp.capo;
+      instrumentRef.current = exp.instrument ?? 0;
+      const inputs: any[] = [...access.inputs.values()];
+      inputs.forEach((inp) => { inp.onmidimessage = handleMIDI; });
+      midiInputsRef.current = inputs;
+
+      const audio = new Audio(exp.ambience);
+      audio.loop = true;
+      audio.volume = 0.6;
+      await audio.play();
+      audioRef.current = audio;
+
+      setActiveExp(exp.id);
+      setExpStatus((s) => ({ ...s, [exp.id]: "ready" }));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setExpStatus((s) => ({ ...s, [exp.id]: "error" }));
+      setExpError((e) => ({ ...e, [exp.id]: msg }));
+    }
+  };
 
   const playNote = (note: string) => {
     setActiveKey(note);
@@ -67,29 +251,48 @@ export function PlaygroundPage() {
       <div className="max-w-3xl mx-auto">
         {/* Interactive Experiences */}
         <div className="space-y-6 mt-6 mb-6">
-          {experiences.map((exp) => (
-            <a
-              key={exp.id}
-              href={exp.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
-            >
-              <div className="relative aspect-[2.2/1]">
-                <ImageWithFallback src={exp.image} alt={exp.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-xl md:text-2xl">{exp.name}</h3>
-                  <p className="text-sm opacity-75">{exp.mood}</p>
-                </div>
-                <div className="absolute top-3 right-3">
-                  <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs border border-white/30 font-['Space_Grotesk']">
+          {experiences.map((exp) => {
+            const status = expStatus[exp.id] ?? "idle";
+            const isActive = activeExp === exp.id;
+            return (
+              <div
+                key={exp.id}
+                onClick={() => handleExperienceClick(exp)}
+                className={`block rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                  isActive ? "ring-4 ring-black/30" : ""
+                }`}
+              >
+                <div className="relative aspect-[2.2/1]">
+                  <ImageWithFallback src={exp.image} alt={exp.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <h3 className="text-xl md:text-2xl">{exp.name}</h3>
+                    <p className="text-sm opacity-75">{exp.mood}</p>
+                  </div>
+                  <div className="absolute bottom-4 right-4 text-right text-xs">
+                    {status === "loading" && (
+                      <span className="text-white/80">Connecting PG-2…</span>
+                    )}
+                    {status === "ready" && (
+                      <span className="text-green-300">✓ Loaded — play your PG-2</span>
+                    )}
+                    {status === "error" && (
+                      <span className="text-red-300">{expError[exp.id]}</span>
+                    )}
+                  </div>
+                  <a
+                    href={exp.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs border border-white/30 font-['Space_Grotesk'] hover:bg-white/30"
+                  >
                     Open ↗
-                  </span>
+                  </a>
                 </div>
               </div>
-            </a>
-          ))}
+            );
+          })}
         </div>
 
         {/* Scene Cards */}

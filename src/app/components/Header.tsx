@@ -16,6 +16,7 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showEmailPopup, setShowEmailPopup] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [rotation, setRotation] = useState(pageRotations[location.pathname] ?? 0);
@@ -55,8 +56,8 @@ export function Header() {
             <AsteriskLogo color={isPlayground ? "#333" : "white"} />
           </motion.div>
 
-          {/* Right: Nav */}
-          <nav className="flex items-center gap-4 md:gap-6">
+          {/* Right: Nav (desktop) */}
+          <nav className="hidden md:flex items-center gap-4 md:gap-6">
             <button
               onClick={() => navigate("/manual")}
               className={`bg-transparent border-none cursor-pointer text-sm md:text-base ${isManual ? "font-bold" : ""} ${textColor}`}
@@ -79,6 +80,17 @@ export function Header() {
               </svg>
             </button>
           </nav>
+
+          {/* Right: Hamburger (mobile) */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="md:hidden bg-transparent border-none cursor-pointer p-1 flex flex-col gap-[5px]"
+            aria-label="Menu"
+          >
+            <span className={`block w-6 h-[2px] ${isPlayground ? "bg-black" : "bg-white"}`} />
+            <span className={`block w-6 h-[2px] ${isPlayground ? "bg-black" : "bg-white"}`} />
+            <span className={`block w-6 h-[2px] ${isPlayground ? "bg-black" : "bg-white"}`} />
+          </button>
         </div>
       </header>
 
@@ -91,7 +103,6 @@ export function Header() {
             exit={{ opacity: 0, y: -10, scale: 0.9 }}
             className="fixed top-16 right-4 md:right-8 z-[60] bg-white rounded-2xl shadow-xl p-5 w-72"
           >
-            <div className="absolute -top-2 right-8 w-4 h-4 bg-white rotate-45" />
             {!submitted ? (
               <>
                 <p className="text-sm text-gray-800 mb-3">Stay in the loop! Drop your email and we'll keep you posted 🎸</p>
@@ -121,6 +132,43 @@ export function Header() {
       {/* Click outside to close */}
       {showEmailPopup && (
         <div className="fixed inset-0 z-[55]" onClick={() => setShowEmailPopup(false)} />
+      )}
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="md:hidden fixed top-16 right-4 z-[60] bg-white rounded-2xl shadow-xl p-4 w-44 flex flex-col gap-1"
+          >
+            <button
+              onClick={() => { navigate("/manual"); setShowMobileMenu(false); }}
+              className={`text-left px-3 py-2 rounded-lg text-sm bg-transparent border-none cursor-pointer hover:bg-gray-100 ${isManual ? "font-bold" : ""}`}
+            >
+              Manual
+            </button>
+            <button
+              onClick={() => { navigate("/playground"); setShowMobileMenu(false); }}
+              className={`text-left px-3 py-2 rounded-lg text-sm bg-transparent border-none cursor-pointer hover:bg-gray-100 ${isPlayground ? "font-bold" : ""}`}
+            >
+              Playground
+            </button>
+            <button
+              onClick={() => { setShowMobileMenu(false); setShowEmailPopup(true); }}
+              className="text-left px-3 py-2 rounded-lg text-sm bg-transparent border-none cursor-pointer hover:bg-gray-100 flex items-center gap-2"
+            >
+              <svg width="16" height="16" viewBox="0 0 55.4877 55.4877" fill="none">
+                <path d={shopIconPath} fill="black" />
+              </svg>
+              Shop
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {showMobileMenu && (
+        <div className="md:hidden fixed inset-0 z-[55]" onClick={() => setShowMobileMenu(false)} />
       )}
     </>
   );

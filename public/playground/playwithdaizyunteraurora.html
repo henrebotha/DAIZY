@@ -324,18 +324,9 @@
 
         if (command === 0x90 && data2 > 0) {
             flashMidiLed();
-            // 按音名(note%12)匹配到当前和弦的弦索引，避免 PG-2 与 CHORD_NOTES 八度偏移导致的音高不一致
-            const chord = CHORD_NOTES[activeChordIndex];
-            let stringIdx = -1;
-            for (let i = 0; i < chord.length; i++) {
-                if (chord[i] !== 0 && chord[i] % 12 === data1 % 12) { stringIdx = i; break; }
-            }
-            if (stringIdx !== -1) {
-                visualStringVibrate(stringIdx);
-                playTone(chord[stringIdx], data2, true); // 用 CHORD_NOTES 的音，与键盘一致
-            } else {
-                playTone(data1, data2, true);
-            }
+            const stringIdx = CHORD_NOTES[activeChordIndex].indexOf(data1);
+            if (stringIdx !== -1) visualStringVibrate(stringIdx);
+            playTone(data1, data2, true);
         }
         else if (command === 0xB0) {
             let index = Math.floor((data2 / 128) * 9);
@@ -354,7 +345,7 @@
         const now = audioCtx.currentTime;
         if (activeVoices[note]) stopTone(note);
         const transpose = parseInt(document.getElementById('transpose').value);
-        const freq = 440 * Math.pow(2, (note + transpose - 69) / 12);
+        const freq = 440 * Math.pow(2, (note + transpose -69) / 12);
         
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
