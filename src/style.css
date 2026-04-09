@@ -1,0 +1,179 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4a4a4a;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  overflow: hidden;
+}
+
+.card {
+  display: flex;
+  width: 640px;
+  height: 340px;
+  border-radius: 14px;
+  border: 3.5px solid rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
+  background: #efedea;
+}
+
+/* ===== 左侧窄条：PG-2 标签 + 滑块 ===== */
+.sidebar-strip {
+  width: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0 16px 0;
+  background: #efedea;
+  flex-shrink: 0;
+}
+
+.sidebar-strip .label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+
+.sidebar-strip .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  margin-top: 5px;
+}
+
+.sidebar-strip .slider-track {
+  flex: 1;
+  width: 5px;
+  margin-top: 8px;
+  border-radius: 2.5px;
+  background: linear-gradient(
+    to bottom,
+    #151515 0%,
+    #1e1e1e 40%,
+    #3a2a1a 55%,
+    #c45518 72%,
+    #e8631e 85%,
+    #f06828 100%
+  );
+}
+
+/* ===== 左侧面板：屏幕 + 旋钮 ===== */
+.left-panel {
+  width: 172px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: #efedea;
+  padding: 10px 8px 10px 0;
+  gap: 0;
+}
+
+.screen {
+  height: 48%;
+  background: #12162a;
+  border: 1.5px solid #555;
+  border-radius: 3px;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.chord-wheel {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.knob-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d8d4cf;
+  border: 1px solid #c0bbb5;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.knob {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 40%,
+    #aaa 0%,
+    #959595 40%,
+    #787878 70%,
+    #6a6a6a 100%
+  );
+  border: 3px solid #8a8a8a;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+/* ===== 右侧蓝色面板 ===== */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px 10px 0;
+  background: #efedea;
+}
+
+.blue-panel {
+  flex: 1;
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #0f2e5a;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.15);
+}
+
+.blue-row {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(
+    to bottom,
+    #3070b8 0%,
+    #2564aa 25%,
+    #1d5898 55%,
+    #174d88 80%,
+    #14457c 100%
+  );
+}
+
+.blue-row + .blue-row {
+  border-top: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(80, 145, 215, 0.2);
+}
+
+.blue-row .tick {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 1.5px;
+  background: rgba(8, 25, 55, 0.45);
+  border-radius: 1px;
+}
