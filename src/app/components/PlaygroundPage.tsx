@@ -33,6 +33,45 @@ const scenes = [
   },
 ];
 
+// Library of chord shapes (low E → high E, 0 = mute)
+const CHORD_LIB: Record<string, number[]> = {
+  "Daizy":   [40, 45, 50, 55, 59, 64],
+  "C":       [0,  48, 52, 55, 60, 64],
+  "G":       [43, 47, 50, 55, 59, 67],
+  "Am":      [0,  45, 52, 57, 60, 64],
+  "F":       [41, 48, 53, 57, 60, 65],
+  "Dm":      [0,  0,  50, 57, 62, 65],
+  "Em":      [40, 47, 52, 55, 59, 64],
+  "Am7":     [0,  45, 52, 55, 60, 64],
+  "Dm7":     [0,  0,  50, 57, 60, 65],
+  "G7":      [43, 47, 50, 55, 59, 65],
+  "Cmaj7":   [0,  48, 52, 55, 59, 64],
+  "Fmaj7":   [0,  0,  53, 57, 60, 64],
+  "Bm7b5":   [0,  47, 53, 57, 62, 0],
+  "Cadd9":   [0,  48, 52, 55, 62, 64],
+  "D/F#":    [42, 0,  50, 57, 62, 66],
+  "B7":      [0,  47, 51, 57, 59, 66],
+  "Am/D":    [0,  0,  50, 57, 60, 64],
+  "Asus2/C": [0,  48, 52, 57, 59, 64],
+  "Am/E":    [40, 45, 52, 57, 60, 64],
+};
+
+// PG-2 short-name (≤7 chars). For symbols PG-2 can't show, use ASCII fallback.
+const PG_NAME: Record<string, string> = {
+  "Bm7♭5": "Bm7b5",
+};
+
+const sceneToCW = (chordNames: string[]): CWChord[] => {
+  const slots: CWChord[] = [{ name: "Daizy", notes: CHORD_LIB["Daizy"] }];
+  for (let i = 0; i < 8; i++) {
+    const raw = chordNames[i % chordNames.length];
+    const key = PG_NAME[raw] ?? raw;
+    const notes = CHORD_LIB[key] ?? CHORD_LIB["Daizy"];
+    slots.push({ name: key, notes });
+  }
+  return slots;
+};
+
 // Slot order: 0=Center, 1=Up, 2=NE, 3=Right, 4=SE, 5=Down, 6=SW, 7=Left, 8=NW
 // 9 chords, names ≤ 7 chars practical
 const SHARED_CHORDS: CWChord[] = [
@@ -45,6 +84,19 @@ const SHARED_CHORDS: CWChord[] = [
   { name: "G7",   notes: [43, 47, 50, 55, 59, 65] },
   { name: "F",    notes: [41, 48, 53, 57, 60, 65] },
   { name: "E7",   notes: [40, 47, 50, 56, 59, 64] },
+];
+
+// Aurora: slot 0 = Daizy open, slots 1-8 = Em-key family
+const AURORA_CHORDS: CWChord[] = [
+  { name: "Daizy", notes: [40, 47, 52, 55, 59, 64] }, // 0 center (Em open)
+  { name: "Em",    notes: [40, 47, 52, 55, 59, 64] }, // 1
+  { name: "G",     notes: [43, 47, 50, 55, 59, 67] }, // 2
+  { name: "Am",    notes: [0,  45, 52, 57, 60, 64] }, // 3
+  { name: "C",     notes: [0,  48, 52, 55, 60, 64] }, // 4
+  { name: "D",     notes: [0,  0,  50, 57, 62, 66] }, // 5
+  { name: "Bm",    notes: [0,  0,  49, 54, 59, 66] }, // 6
+  { name: "Em7",   notes: [40, 47, 50, 55, 59, 62] }, // 7
+  { name: "Cmaj7", notes: [0,  48, 52, 55, 59, 64] }, // 8
 ];
 
 type Experience = {
@@ -77,7 +129,7 @@ const experiences: Experience[] = [
     image: "/playground/aurorabg2.jpg",
     href: "/playground/playwithdaizyunteraurora.html",
     ambience: "/playground/auroraambientloop.mp3",
-    chords: SHARED_CHORDS,
+    chords: AURORA_CHORDS,
     capo: 11,
     instrument: 1,
   },
@@ -240,6 +292,20 @@ export function PlaygroundPage() {
     }
   };
 
+  const handleSceneClick = async (sceneId: string, chordNames: string[]) => {
+    const next = selectedScene === sceneId ? null : sceneId;
+    setSelectedScene(next);
+    if (!next) return;
+    try {
+      await connectPG2();
+      uploadCW(sceneToCW(chordNames), 0);
+      activateCW();
+    } catch (err) {
+      // 静默失败：场景卡片只发和弦，不影响 UI
+      console.warn("PG-2 upload failed:", err);
+    }
+  };
+
   const playNote = (note: string) => {
     setActiveKey(note);
     // In a real app, this would send MIDI or play audio
@@ -303,7 +369,7 @@ export function PlaygroundPage() {
               className={`rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
                 selectedScene === scene.id ? "ring-4 ring-black/30 shadow-2xl" : "shadow-md hover:shadow-xl"
               }`}
-              onClick={() => setSelectedScene(selectedScene === scene.id ? null : scene.id)}
+              onClick={() => handleSceneClick(scene.id, scene.chords)}
             >
               <div className="relative aspect-[2.2/1]">
                 <ImageWithFallback src={scene.image} alt={scene.name} className="w-full h-full object-cover" />
