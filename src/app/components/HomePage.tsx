@@ -1,7 +1,8 @@
 import imgControl1 from "figma:asset/5689f4eb3355c7a15d2241968b2137634b60922c.png";
 import imgControl2 from "figma:asset/8084d5e342d7dafc18c2350a78de6f5ca24d161b.png";
 import imgHeroText from "figma:asset/7b0a6cde5f566682f68fc71b9be8045eb3fc7c96.png";
-import imgPG2Section from "figma:asset/4dcabf491f9a1e2fab7a9cc4d72e7103f8a07b9f.png";
+import imgPG2Section from "../../assets/pg-2.png";
+import { WaveBackground } from "./WaveBackground";
 
 export function HomePage() {
   return (
@@ -12,8 +13,24 @@ export function HomePage() {
       </section>
 
       {/* PG-2 Product Section */}
-      <section className="relative bg-black">
-        <img src={imgPG2Section} alt="PG-2 Product" className="w-auto h-auto max-h-screen ml-auto block object-contain" />
+      <section className="relative w-full min-h-screen overflow-hidden flex items-center justify-center bg-black">
+        <WaveBackground />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(255,255,255,0.55) 1px, transparent 1.5px)",
+            backgroundSize: "120px 120px",
+            backgroundAttachment: "fixed",
+            mixBlendMode: "difference",
+          }}
+        />
+        <img
+          src={imgPG2Section}
+          alt="PG-2 Product"
+          className="relative z-10 block max-w-full max-h-[90vh] w-auto h-auto object-contain mx-auto"
+        />
       </section>
 
       {/* Description Section */}

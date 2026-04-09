@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAIZY PLAYGROUND 🌼</title>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pixel-yellow: #ffcf3e; --pixel-white: #eeebc4; --pixel-brown: #5D4037;
+            --pixel-text: #4E342E; --accent-pixel: #f66d28; --bg-overlay: rgba(5, 249, 253, 0.303);
+            --string-color: #4E342E; --midi-active: #00FF00;
+        }
+        body { 
+            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
+            background: url('bg.jpg') no-repeat center center fixed; background-size: cover; 
+            font-family: 'DotGothic16', 'Press Start 2P', monospace; overflow: hidden; 
+        }
+        body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-overlay); backdrop-filter: blur(1px) saturate(0.8); z-index: 1; pointer-events: none; }
+        
+        .game-container { position: relative; z-index: 10; display: flex; flex-direction: row; align-items: flex-end; gap: 120px; justify-content: center; margin-top: -60px; }
+        
+        @keyframes sway { 0%, 100% { transform: rotate(-0.3deg); } 50% { transform: rotate(0.3deg) translateY(-1px); } }
+        
+        .daisy-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; animation: sway 10s ease-in-out infinite; }
+        
+        .capo-center { position: absolute; top: 230px; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 20; }
+        .capo-label { font-size: 9px; font-family: 'Press Start 2P'; color: var(--pixel-text); margin-bottom: 4px; background: rgba(255, 255, 255, 0.7); padding: 2px 4px; }
+        
+        input[type=range] { -webkit-appearance: none; background: #4E342E; height: 4px; outline: none; pointer-events: auto; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 10px; background: var(--accent-pixel); border: 2px solid #FFF9C4; cursor: pointer; }
+        #transpose { width: 80px; }
+        #sustainSlider { width: 160px; }
+
+        .val-tag { font-size: 10px; color: var(--accent-pixel); margin-top: 4px; background: #FFF9C4; padding: 0 4px; font-weight: bold; }
+        
+        svg { cursor: pointer; user-select: none; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.1)); }
+        .petal, .flower-center { transition: all 0.3s ease; stroke: rgba(0, 0, 0, 0.05); stroke-width: 2; }
+        .active-target { 
+            stroke: var(--accent-pixel) !important; 
+            stroke-width: 5; 
+            stroke-dasharray: 8 8; 
+            stroke-linecap: square; 
+            filter: drop-shadow(4px 4px 0px var(--accent-pixel)); 
+        }
+        .controls-footer { margin-top: 20px; display: flex; gap: 40px; background: rgba(255,255,255,0.4); padding: 10px 20px; border: 2px solid var(--pixel-text); pointer-events: auto; }
+        .control-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .strum-switch { width: 50px; height: 24px; background: #ccc; border: 3px solid var(--pixel-text); position: relative; cursor: pointer; }
+        .strum-switch.on { background: var(--pixel-yellow); }
+        .switch-knob { width: 16px; height: 16px; background: var(--pixel-text); position: absolute; top: 1px; left: 2px; transition: 0.2s; }
+        .strum-switch.on .switch-knob { transform: translateX(24px); }
+        
+        .knob-container { 
+            width: 26px; height: 26px; 
+            background: #FFF9C4; 
+            border: 3px solid var(--pixel-text); 
+            border-radius: 50%; 
+            position: relative; 
+            cursor: ns-resize; 
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            margin: 2px 0;
+        }
+        .knob-dial {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            position: absolute;
+            top: 0; left: 0;
+            transform: rotate(-135deg);
+        }
+        .knob-indicator {
+            position: absolute; 
+            top: 2px; left: 50%; 
+            width: 4px; height: 8px; 
+            background: var(--pixel-text); 
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        
+        .right-panel { display: flex; flex-direction: column; justify-content: flex-end; position: relative; top: -15px; }
+        
+        .instrument-selector { display: flex; justify-content: center; gap: 24px; margin-bottom: 28px; animation: sway 10s ease-in-out infinite alternate-reverse; }
+        
+        .inst-btn { width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; background: transparent; border: none; opacity: 0.3; transform: scale(0.9); }
+        .inst-btn:hover { opacity: 0.6; }
+        .inst-btn.active { opacity: 1; transform: scale(1.2) translateY(-4px); } 
+        
+        .strings-container { display: flex; flex-direction: column; gap: 22px; padding: 40px 50px; background: rgba(255, 255, 255, 0.15); border: 3px solid var(--pixel-text); min-width: 450px; animation: sway 9s ease-in-out infinite alternate; }
+        
+        .string-row { display: flex; align-items: center; gap: 20px; cursor: pointer; }
+        .key-hint { width: 28px; height: 28px; background: var(--pixel-text); color: #FFF9C4; display: flex; justify-content: center; align-items: center; font-size: 10px; font-family: 'Press Start 2P'; border: 2px solid var(--pixel-text); }
+        
+        .label-main { fill: var(--pixel-brown); font-weight: bold; }
+        
+        .string-line { width: 420px; height: 3px; background: var(--string-color); position: relative; }
+        
+        .string-line.vibrate { animation: vibrate-line 0.25s linear; background: var(--accent-pixel); }
+        @keyframes vibrate-line { 0% { transform: translateY(0); } 33% { transform: translateY(-6px); } 66% { transform: translateY(6px); } 100% { transform: translateY(0); } }
+        
+        .info-box { position: absolute; bottom: 40px; display: flex; align-items: center; gap: 20px; padding: 8px 15px; background: #FFF9C4; border: 3px solid var(--pixel-text); z-index: 100; min-width: 350px; animation: sway 11s ease-in-out infinite alternate-reverse; }
+        
+        .midi-led { width: 10px; height: 10px; background: #333; border-radius: 50%; }
+        .midi-led.hit { background: var(--midi-active); box-shadow: 0 0 8px var(--midi-active); }
+
+        .instruction-container { position: absolute; top: 30px; right: 40px; z-index: 1000; display: flex; align-items: center; gap: 10px; }
+        .instruction-btn { font-family: 'Press Start 2P'; font-size: 12px; background: var(--pixel-text); color: #FFF9C4; padding: 10px 15px; border: 3px solid var(--pixel-text); cursor: help; user-select: none; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); }
+        
+        /* 音频图标样式 */
+        .ambience-toggle { 
+            width: 38px; height: 38px; 
+            background: var(--pixel-yellow); 
+            border: 3px solid var(--pixel-text); 
+            display: flex; justify-content: center; align-items: center; 
+            cursor: pointer; box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+            image-rendering: pixelated; transition: transform 0.1s;
+        }
+        .ambience-toggle:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.1); }
+        .ambience-toggle.playing svg { animation: spin 4s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .instruction-tooltip { 
+            visibility: hidden; opacity: 0; position: absolute; top: 45px; right: 0; width: 480px; 
+            background: #FFF9C4; border: 3px solid var(--pixel-text); padding: 15px; 
+            font-family: 'DotGothic16', monospace; font-size: 13px; color: var(--pixel-text); 
+            transition: opacity 0.2s ease; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); 
+        }
+        
+        .instruction-btn:hover + .instruction-tooltip,
+        .instruction-tooltip:hover { visibility: visible; opacity: 1; }
+        
+        .instruction-tooltip p { margin: 8px 0; line-height: 1.5; }
+        .instruction-tooltip strong { font-size: 14px; border-bottom: 2px solid var(--pixel-text); padding-bottom: 2px; display: inline-block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="instruction-container">
+    <div class="ambience-toggle" id="ambienceBtn" onclick="toggleAmbience()" title="Toggle Ambience">
+        <svg viewBox="0 0 16 16" width="24" height="24">
+            <path d="M9,2 L9,14 L5,10 L2,10 L2,6 L5,6 L9,2 Z" fill="var(--pixel-text)" />
+            <path d="M11,5 L11,11 M13,3 L13,13" stroke="var(--pixel-text)" stroke-width="2" fill="none" stroke-linecap="square" />
+        </svg>
+    </div>
+    
+    <div class="control-group" style="margin-right: 35px;">
+        <span style="font-size:8px; font-family:'Press Start 2P'; color: var(--pixel-text);">VOL</span>
+        <div class="knob-container" style="margin: 0;">
+            <div class="knob-dial" id="ambienceVolKnob"><div class="knob-indicator"></div></div>
+        </div>
+        <span id="amb-vol-display" style="display: none;"></span> 
+    </div>
+
+    <audio id="ambienceAudio" loop src="ambienceloop.mp3"></audio>
+
+    <div class="instruction-btn">INSTRUCTION</div>
+    <div class="instruction-tooltip">
+        <p><strong>DAIZY PG-2 🌼</strong></p>
+            <p>Hello！这是DAIZY PG-2的网页版：</p>
+            <p>点击屏幕任意位置来开启音频！</p>
+            <p>
+            · <strong>和弦</strong>：点击花心 (Open) 或花瓣切换和弦。<br>
+            · <strong>琴弦</strong>：点击右侧琴弦，或使用键盘 <b>A,S,D,F,G,H</b> 弹奏当前和弦的单音。<br>
+            · <strong>音色</strong>：点击琴弦上方小图标切换不同的乐器音色。<br>
+            · <strong>控制</strong>：使用 CAPO 滑块变调，开启STRUM弦会自动扫弦，上下拖拽旋钮调节 DECAY 与 SUSTAIN。<br>
+            · <strong>环境音</strong>：点击🔊来播放场景的环境，使用Vol旋钮来控制音量。<br>
+            · <strong>MIDI</strong>： 连接DAIZY PG-2试试吧！
+            </p>
+            <hr style="border: 1px dashed var(--pixel-text); margin: 10px 0;">
+            <p>Hello! This is the web version of DAIZY PG-2:</p>
+            <p>Click Anywhere On The Screen To Start Audio! </p>
+            <p>
+            · <strong>CHORDS</strong>: Click the center (Open) or petals to switch chords.<br>
+            · <strong>STRINGS</strong>: Click the strings on the right, or use keys <b>A, S, D, F, G, H</b> to play notes.<br>
+            · <strong>TIMBRE</strong>: Click the icons above the strings to switch sounds.<br>
+            · <strong>CONTROLS</strong>: Use CAPO to transpose. Turn on STRUM to auto-strum. Drag knobs to adjust DECAY & SUSTAIN.<br>
+            · <strong>AMBIENCE</strong>：Click 🔊 to play the scene's ambient sound, and use the Vol knob to control the volume.<br>
+             · <strong>MIDI</strong>: Connect your DAIZY PG-2 to play along!
+        </p>
+    </div>
+</div>
+
+<div class="game-container">
+    <div class="daisy-wrapper">
+        <svg width="460" height="460" viewBox="0 0 500 500" id="daisy"></svg>
+        <div class="capo-center">
+            <span class="capo-label">CAPO</span>
+            <input type="range" id="transpose" min="-12" max="12" value="0" step="1">
+            <span id="val-display" class="val-tag">0</span>
+        </div>
+        <div class="controls-footer">
+            <div class="control-group">
+                <span style="font-size:8px; font-family:'Press Start 2P'">STRUM</span>
+                <div id="strumSwitch" class="strum-switch on" onclick="toggleStrum()">
+                    <div class="switch-knob"></div>
+                </div>
+            </div>
+            <div class="control-group">
+                <span style="font-size:8px; font-family:'Press Start 2P'">DECAY</span>
+                <div class="knob-container">
+                    <div class="knob-dial" id="decayKnob"><div class="knob-indicator"></div></div>
+                </div>
+                <span id="dec-display" class="val-tag">1.0s</span>
+            </div>
+            <div class="control-group">
+                <span style="font-size:8px; font-family:'Press Start 2P'">SUSTAIN</span>
+                <div class="knob-container">
+                    <div class="knob-dial" id="sustainKnob"><div class="knob-indicator"></div></div>
+                </div>
+                <span id="sus-display" class="val-tag">2.0s</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="instrument-selector">
+            <div class="inst-btn active" onclick="selectInstrument(0)">
+                <svg viewBox="0 0 8 8" width="36" height="36" shape-rendering="crispEdges">
+                    <rect x="6" y="0" width="2" height="2" fill="var(--pixel-text)" />
+                    <rect x="7" y="0" width="1" height="1" fill="#FFF9C4" />
+                    <rect x="5" y="2" width="1" height="1" fill="var(--pixel-text)" />
+                    <rect x="4" y="3" width="1" height="1" fill="var(--pixel-text)" />
+                    <rect x="1" y="4" width="4" height="3" fill="var(--pixel-text)" />
+                    <rect x="2" y="5" width="2" height="1" fill="#FFF9C4" />
+                </svg>
+            </div>
+            <div class="inst-btn" onclick="selectInstrument(1)">
+                <svg viewBox="0 0 8 8" width="36" height="36" shape-rendering="crispEdges">
+                    <rect x="0" y="2" width="8" height="5" fill="var(--pixel-text)" />
+                    <rect x="1" y="3" width="6" height="3" fill="#FFF9C4" />
+                    <rect x="2" y="3" width="1" height="2" fill="var(--pixel-text)" />
+                    <rect x="4" y="3" width="1" height="2" fill="var(--pixel-text)" />
+                    <rect x="6" y="3" width="1" height="2" fill="var(--pixel-text)" />
+                </svg>
+            </div>
+            <div class="inst-btn" onclick="selectInstrument(2)">
+                <svg viewBox="0 0 8 8" width="36" height="36" shape-rendering="crispEdges">
+                    <path d="M2,2 h2 v-1 h2 v1 h1 v1 h1 v3 h-7 v-1 h-1 v-2 h1 v-1 z" fill="var(--pixel-text)" />
+                    <path d="M3,2 h1 v1 h2 v1 h1 v2 h-5 v-1 h-1 v-1 h1 v-1 h1 z" fill="#FFF9C4" />
+                </svg>
+            </div>
+            <div class="inst-btn" onclick="selectInstrument(3)">
+                <svg viewBox="0 0 8 8" width="36" height="36" shape-rendering="crispEdges">
+                    <path d="M4,0 h1 v1 h1 v2 h1 v2 h-1 v1 h-1 v1 h-1 v1 h-1 v-1 h-1 v-1 h-1 v-2 h1 v-2 h1 v-1 h1 z" fill="var(--pixel-text)" />
+                    <path d="M4,1 h1 v1 h1 v2 h-1 v1 h-1 v1 h-1 v-1 h-1 v-2 h1 v-1 h1 z" fill="#FFF9C4" />
+                    <rect x="3" y="1" width="1" height="5" fill="var(--pixel-text)" />
+                </svg>
+            </div>
+        </div>
+        <div class="strings-container">
+            <div class="string-row" onclick="manualPlayNote(0)"><div class="key-hint">A</div><div class="string-line" id="s0"></div></div>
+            <div class="string-row" onclick="manualPlayNote(1)"><div class="key-hint">S</div><div class="string-line" id="s1"></div></div>
+            <div class="string-row" onclick="manualPlayNote(2)"><div class="key-hint">D</div><div class="string-line" id="s2"></div></div>
+            <div class="string-row" onclick="manualPlayNote(3)"><div class="key-hint">F</div><div class="string-line" id="s3"></div></div>
+            <div class="string-row" onclick="manualPlayNote(4)"><div class="key-hint">G</div><div class="string-line" id="s4"></div></div>
+            <div class="string-row" onclick="manualPlayNote(5)"><div class="key-hint">H</div><div class="string-line" id="s5"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="info-box">
+    <div class="midi-led" id="midiLed"></div>
+    <p id="midiText" style="margin:0; font-size:9px;">MIDI In. PLAY WITH DAIZY PG-2. 🌼</p>
+</div>
+
+<script>
+    const CHORD_NOTES = [
+    [40, 45, 50, 55, 59, 64], 
+    [0,  48, 52, 55, 60, 64], 
+    [40, 47, 52, 55, 59, 64], 
+    [43, 47, 50, 55, 59, 67], 
+    [0,  0,  50, 57, 62, 65], 
+    [0,  45, 52, 57, 60, 64], 
+    [43, 47, 50, 55, 59, 65], 
+    [41, 48, 53, 57, 60, 65], 
+    [40, 47, 50, 56, 59, 64]  
+];
+    const CHORD_NAMES = ["Open", "C", "Em", "G", "Dm", "Am", "G7", "F", "E7"];
+    const keyMap = { 'a': 0, 's': 1, 'd': 2, 'f': 3, 'g': 4, 'h': 5 };
+
+    let activeChordIndex = 0; let isStrumming = true; let audioCtx = null; let activeVoices = {}; 
+    let activeInstrument = 0; 
+    let decayTime = 1.0; 
+    let sustainTime = 2.0; 
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    
+    // 氛围音控制功能
+    function toggleAmbience() {
+        initAudio();
+        const audio = document.getElementById('ambienceAudio');
+        const btn = document.getElementById('ambienceBtn');
+        if (audio.paused) {
+            audio.play();
+            btn.classList.add('playing');
+        } else {
+            audio.pause();
+            btn.classList.remove('playing');
+        }
+    }
+
+    function selectInstrument(idx) {
+        activeInstrument = idx;
+        document.querySelectorAll('.inst-btn').forEach((btn, i) => {
+            if(i === idx) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    }
+
+    if (navigator.requestMIDIAccess) {
+        navigator.requestMIDIAccess({ sysex: true }).then(access => {
+            for (let input of access.inputs.values()) input.onmidimessage = handleMIDI;
+        });
+    }
+
+    function handleMIDI(msg) {
+        const command = msg.data[0] & 0xf0; 
+        const data1 = msg.data[1]; 
+        const data2 = msg.data[2]; 
+        initAudio();
+
+        if (command === 0x90 && data2 > 0) { 
+            flashMidiLed(); 
+            const stringIdx = CHORD_NOTES[activeChordIndex].indexOf(data1);
+            if (stringIdx !== -1) visualStringVibrate(stringIdx);
+            playTone(data1, data2, true); 
+        } 
+        else if (command === 0xB0) {
+            let index = Math.floor((data2 / 128) * 9);
+            if(index > 8) index = 8;
+            activeChordIndex = index;
+            updateUISelection(activeChordIndex);
+        }
+        else if (command === 0xC0) {
+            let index = data1 % 9;
+            activeChordIndex = index;
+            updateUISelection(activeChordIndex);
+        }
+    }
+
+    function playTone(note, velocity, isMIDI) {
+        const now = audioCtx.currentTime;
+        if (activeVoices[note]) stopTone(note);
+        const transpose = parseInt(document.getElementById('transpose').value);
+        const freq = 440 * Math.pow(2, (note + transpose - 69) / 12);
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        let filter = null;
+        
+        let attackTime = 0.015;
+        let localDecay = decayTime;
+        let localSustain = sustainTime;
+        let targetVol = (velocity / 127) * 0.35;
+        let sustainLevel = targetVol * 0.4 + 0.0001;
+        
+        if (activeInstrument === 0) { 
+            osc.type = 'triangle';
+        } else if (activeInstrument === 1) { 
+            osc.type = 'sine';
+            attackTime = 0.01;
+            targetVol *= 1.2;
+            sustainLevel = targetVol * 0.2 + 0.0001; 
+        } else if (activeInstrument === 2) { 
+            osc.type = 'sine';
+            attackTime = 0.4;
+            localSustain = sustainTime * 2.0;
+            targetVol *= 0.8;
+            sustainLevel = targetVol * 0.8 + 0.0001; 
+        } else if (activeInstrument === 3) { 
+            osc.type = 'square';
+            attackTime = 0.005;
+            targetVol *= 0.15;
+            sustainLevel = targetVol * 0.3 + 0.0001;
+            filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.Q.value = 3;
+            filter.frequency.setValueAtTime(2000, now);
+            filter.frequency.exponentialRampToValueAtTime(100, now + localDecay);
+        }
+
+        osc.frequency.setValueAtTime(freq, now);
+        
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(targetVol, now + attackTime);
+        gain.gain.exponentialRampToValueAtTime(sustainLevel, now + attackTime + localDecay);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + attackTime + localDecay + localSustain);
+
+        if (filter) {
+            osc.connect(filter);
+            filter.connect(gain);
+        } else {
+            osc.connect(gain);
+        }
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        activeVoices[note] = { osc, gain, isMIDI };
+        osc.stop(now + attackTime + localDecay + localSustain + 0.1);
+    }
+
+    function stopTone(note) {
+        if (activeVoices[note]) {
+            const v = activeVoices[note];
+            const now = audioCtx.currentTime;
+            v.gain.gain.cancelScheduledValues(now);
+            v.gain.gain.setValueAtTime(v.gain.gain.value, now);
+            v.gain.gain.linearRampToValueAtTime(0, now + 0.05);
+            v.osc.stop(now + 0.06);
+            delete activeVoices[note];
+        }
+    }
+
+    function updateUISelection(idx) {
+        const center = document.getElementById('flower-center-core');
+        if(idx === 0) center.classList.add('active-target');
+        else center.classList.remove('active-target');
+        document.querySelectorAll('.petal').forEach((p, i) => {
+            if ((i + 1) === idx) p.classList.add('active-target');
+            else p.classList.remove('active-target');
+        });
+    }
+
+    function manualPlayNote(stringIdx) {
+        initAudio();
+        const note = CHORD_NOTES[activeChordIndex][stringIdx];
+        if (note === 0) return;
+        playTone(note, 100, false);
+        visualStringVibrate(stringIdx);
+    }
+
+    function manualStrum(idx) {
+        initAudio();
+        activeChordIndex = idx;
+        updateUISelection(idx);
+        if (!isStrumming) return;
+        CHORD_NOTES[idx].forEach((note, i) => {
+            if (note === 0) return;
+            setTimeout(() => { playTone(note, 90, false); visualStringVibrate(i); }, i * 80);
+        });
+    }
+
+    function visualStringVibrate(sIdx) {
+        const el = document.getElementById(`s${sIdx}`);
+        if(el) { el.classList.remove('vibrate'); void el.offsetWidth; el.classList.add('vibrate'); setTimeout(() => el.classList.remove('vibrate'), 150); }
+    }
+
+    function toggleStrum() { isStrumming = !isStrumming; document.getElementById('strumSwitch').classList.toggle('on', isStrumming); }
+    function flashMidiLed() { const led = document.getElementById('midiLed'); led.classList.add('hit'); setTimeout(() => led.classList.remove('hit'), 80); }
+
+    const centerX = 250, centerY = 230, svg = document.getElementById('daisy');
+
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+    pattern.setAttribute("id", "pixelDots");
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+    pattern.setAttribute("width", "6"); 
+    pattern.setAttribute("height", "6");
+
+    const rectDot = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rectDot.setAttribute("width", "2");
+    rectDot.setAttribute("height", "2");
+    rectDot.setAttribute("fill", "white"); 
+    rectDot.setAttribute("fill-opacity", "0.5"); 
+
+    pattern.appendChild(rectDot);
+    defs.appendChild(pattern);
+    svg.appendChild(defs);
+
+    const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    centerCircle.setAttribute("id", "flower-center-core"); centerCircle.setAttribute("cx", centerX); centerCircle.setAttribute("cy", centerY); centerCircle.setAttribute("r", 65); centerCircle.setAttribute("fill", "#FFD54F"); centerCircle.setAttribute("stroke", "#4E342E"); centerCircle.setAttribute("stroke-width", "4"); centerCircle.setAttribute("class", "flower-center active-target"); centerCircle.onclick = () => manualStrum(0); svg.appendChild(centerCircle);
+    for(let i=1; i<=8; i++) {
+        const angle = (i-1) * 45 - 90, radian = (Math.PI * angle) / 180, innerR = 68, midR = 180, outerR = 220, spread = 32;
+        const tipX = centerX + outerR * Math.cos(radian), tipY = centerY + outerR * Math.sin(radian);
+        const side1X = centerX + midR * Math.cos((angle-spread)*Math.PI/180), side1Y = centerY + midR * Math.sin((angle-spread)*Math.PI/180);
+        const side2X = centerX + midR * Math.cos((angle+spread)*Math.PI/180), side2Y = centerY + midR * Math.sin((angle+spread)*Math.PI/180);
+        const startX = centerX + innerR * Math.cos((angle-10)*Math.PI/180), startY = centerY + innerR * Math.sin((angle-10)*Math.PI/180);
+        const endX = centerX + innerR * Math.cos((angle+10)*Math.PI/180), endY = centerY + innerR * Math.sin((angle+10)*Math.PI/180);
+        const pathData = `M ${startX} ${startY} Q ${side1X} ${side1Y}, ${tipX} ${tipY} Q ${side2X} ${side2Y}, ${endX} ${endY} Z`;
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g"), path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        
+        path.setAttribute("d", pathData); 
+        path.setAttribute("fill", "#FFF9C4"); 
+        path.setAttribute("class", "petal"); 
+        path.onclick = () => manualStrum(i);
+        g.appendChild(path); 
+
+        const dotsOverlay = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        dotsOverlay.setAttribute("d", pathData);
+        dotsOverlay.setAttribute("fill", "url(#pixelDots)"); 
+        dotsOverlay.setAttribute("pointer-events", "none"); 
+        g.appendChild(dotsOverlay);
+        
+        const tx = centerX + 120 * Math.cos(radian), ty = centerY + 120 * Math.sin(radian), t1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t1.setAttribute("x", tx); t1.setAttribute("y", ty); t1.setAttribute("text-anchor", "middle"); 
+        
+        t1.setAttribute("class", "label-main"); 
+        t1.textContent = CHORD_NAMES[i];
+        g.appendChild(t1); svg.appendChild(g);
+    }
+    
+    document.getElementById('transpose').oninput = function() { 
+        let val = parseInt(this.value);
+        let displayStr = val > 0 ? "+" + val : val.toString();
+        document.getElementById('val-display').textContent = displayStr; 
+    };
+    
+    function setupKnob(knobId, displayId, min, max, initialVal, onChange) {
+        const dial = document.getElementById(knobId);
+        const display = document.getElementById(displayId);
+        const container = dial.parentElement;
+        let val = initialVal;
+        let isDragging = false;
+        let startY = 0;
+        let startVal = 0;
+
+        function updateVisuals() {
+            const percent = (val - min) / (max - min);
+            const angle = -135 + percent * 270;
+            dial.style.transform = `rotate(${angle}deg)`;
+            if(display) display.textContent = val.toFixed(1) + 's';
+            onChange(val);
+        }
+
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startY = e.clientY;
+            startVal = val;
+            document.body.style.cursor = 'ns-resize';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaY = startY - e.clientY;
+            val = startVal + deltaY * ((max - min) / 100); 
+            if (val < min) val = min;
+            if (val > max) val = max;
+            updateVisuals();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            document.body.style.cursor = 'default';
+        });
+
+        updateVisuals();
+    }
+    
+    setupKnob('decayKnob', 'dec-display', 0.1, 3.0, 1.0, v => decayTime = v);
+    setupKnob('sustainKnob', 'sus-display', 0.1, 5.0, 2.0, v => sustainTime = v);
+    
+    // 增加：配置环境音量调节旋钮 (初始音量50%，范围0.0~1.0)
+    setupKnob('ambienceVolKnob', 'amb-vol-display', 0.0, 1.0, 0.5, v => {
+        document.getElementById('ambienceAudio').volume = v;
+    });
+
+    window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); if (keyMap.hasOwnProperty(key)) manualPlayNote(keyMap[key]); });
+    window.onclick = () => initAudio();
+</script>
+</body>
+</html>

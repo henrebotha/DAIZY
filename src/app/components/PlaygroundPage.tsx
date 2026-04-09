@@ -32,6 +32,23 @@ const scenes = [
   },
 ];
 
+const experiences = [
+  {
+    id: "playwithdaizy",
+    name: "Play with Daizy",
+    mood: "Ambient Jam",
+    image: "/playground/bg.jpg",
+    href: "/playground/playwithdaizy.html",
+  },
+  {
+    id: "aurora",
+    name: "Play with Daizy — Aurora",
+    mood: "Northern Lights Edition",
+    image: "/playground/aurorabg2.jpg",
+    href: "/playground/playwithdaizyunteraurora.html",
+  },
+];
+
 const pianoKeys = ["C", "D", "E", "F", "G", "A", "B"];
 
 export function PlaygroundPage() {
@@ -48,6 +65,33 @@ export function PlaygroundPage() {
   return (
     <div className="bg-[#f7fade] min-h-screen pt-20 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
+        {/* Interactive Experiences */}
+        <div className="space-y-6 mt-6 mb-6">
+          {experiences.map((exp) => (
+            <a
+              key={exp.id}
+              href={exp.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+            >
+              <div className="relative aspect-[2.2/1]">
+                <ImageWithFallback src={exp.image} alt={exp.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <h3 className="text-xl md:text-2xl">{exp.name}</h3>
+                  <p className="text-sm opacity-75">{exp.mood}</p>
+                </div>
+                <div className="absolute top-3 right-3">
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs border border-white/30 font-['Space_Grotesk']">
+                    Open ↗
+                  </span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+
         {/* Scene Cards */}
         <div className="space-y-6 mt-6">
           {scenes.map((scene) => (

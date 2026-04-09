@@ -39,19 +39,10 @@ export function Header() {
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 ${headerBg} backdrop-blur-sm`}>
         <div className="flex items-center justify-between px-4 md:px-8 py-3 max-w-[1400px] mx-auto">
-          {/* Left: Logo + Shop */}
+          {/* Left: Logo */}
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/")} className={`font-['Space_Grotesk'] text-xl md:text-2xl ${textColor} cursor-pointer bg-transparent border-none`}>
               Daziy
-            </button>
-            <button
-              onClick={() => setShowEmailPopup(!showEmailPopup)}
-              className="relative bg-transparent border-none cursor-pointer p-1"
-              style={{ transform: "rotate(18deg)" }}
-            >
-              <svg width="28" height="28" viewBox="0 0 55.4877 55.4877" fill="none">
-                <path d={shopIconPath} fill={isPlayground ? "black" : "white"} />
-              </svg>
             </button>
           </div>
 
@@ -78,6 +69,15 @@ export function Header() {
             >
               Playground
             </button>
+            <button
+              onClick={() => setShowEmailPopup(!showEmailPopup)}
+              className="relative bg-transparent border-none cursor-pointer p-1"
+              aria-label="Shop"
+            >
+              <svg width="18" height="18" viewBox="0 0 55.4877 55.4877" fill="none">
+                <path d={shopIconPath} fill={isPlayground ? "black" : "white"} />
+              </svg>
+            </button>
           </nav>
         </div>
       </header>
@@ -89,9 +89,9 @@ export function Header() {
             initial={{ opacity: 0, y: -10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.9 }}
-            className="fixed top-16 left-4 md:left-20 z-[60] bg-white rounded-2xl shadow-xl p-5 w-72"
+            className="fixed top-16 right-4 md:right-8 z-[60] bg-white rounded-2xl shadow-xl p-5 w-72"
           >
-            <div className="absolute -top-2 left-8 w-4 h-4 bg-white rotate-45" />
+            <div className="absolute -top-2 right-8 w-4 h-4 bg-white rotate-45" />
             {!submitted ? (
               <>
                 <p className="text-sm text-gray-800 mb-3">Stay in the loop! Drop your email and we'll keep you posted 🎸</p>
