@@ -33,21 +33,21 @@ export function HomePage() {
       </section>
 
       {/* Description Section */}
-      <section className="bg-[#f7fade] py-16 md:py-24 pl-4 md:pl-16">
+      <section className="bg-[#fcfef5] py-16 md:py-24 pl-4 md:pl-16">
         <div className="flex flex-col md:flex-row md:items-center md:gap-12">
           <div
             className="order-last md:order-1 mt-10 md:mt-0 md:flex-1 text-[#2d3142] pl-4 md:pl-12 pr-4 md:pr-0"
             style={{ fontFamily: "'Power Grotesk', sans-serif", fontWeight: 300 }}
           >
             <h2 className="text-4xl md:text-6xl mb-8 normal-case">PG-2 isn't a Guitar</h2>
-            <p className="text-2xl md:text-3xl leading-relaxed mb-6 font-light">
+            <p className="text-xl md:text-2xl leading-relaxed mb-6 font-light">
               It's the feeling of a guitar — six strings, real chords, and a whole mood — packed into something that fits in your pocket.
             </p>
-            <p className="text-2xl md:text-3xl leading-relaxed font-light">
+            <p className="text-xl md:text-2xl leading-relaxed font-light">
               Strum it on the train. Strum it in bed. Strum it while your code compiles. You don't need to learn tabs or practice scales. Just pick a vibe, touch the strings, listen and feel.
             </p>
           </div>
-          <div className="order-1 md:order-2 flex justify-end md:flex-shrink-0">
+          <div className="order-1 md:order-2 flex justify-end md:w-[40%] md:flex-shrink-0">
             <img src="/media/frame90.png" alt="PG-2" className="max-w-full h-auto" />
           </div>
         </div>
@@ -86,13 +86,19 @@ export function HomePage() {
         </div>
       </section>
 
-      <section>
-        <img src="/media/portable.png" alt="Portable" className="w-full block" />
+      <section className="relative h-screen overflow-hidden">
+        <img src="/media/portable.png" alt="Portable" className="w-full h-full object-cover" />
       </section>
 
       <section>
         <img src="/media/chefs.png" alt="The Chefs" className="w-full block" />
       </section>
+
+      {/* Footer */}
+      <footer className="bg-[#061115] py-12 text-center">
+        <p className="text-white/70 text-lg mb-2">contact - ayl0n0039@gmail.com</p>
+        <p className="text-white/50 text-sm">@2026 Daizy Inc. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
