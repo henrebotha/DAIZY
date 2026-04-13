@@ -43,7 +43,7 @@ export function Header() {
           {/* Left: Logo */}
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/")} className={`font-['Power_Grotesk'] uppercase tracking-[0.15em] text-xl md:text-2xl ${textColor} cursor-pointer bg-transparent border-none`}>
-              DAZIY
+              DAIZY
             </button>
           </div>
 
